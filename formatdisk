@@ -1,0 +1,25 @@
+#!/bin/sh
+
+DOCKER_HOST=localhost
+VM_NAME=boot2docker-vm
+VBM=VBoxManage
+
+DOCKER_PORT=4243
+SSH_HOST_PORT=2022
+
+ssh-keygen -R [${DOCKER_HOST}]:$SSH_HOST_PORT
+ssh -q -p $SSH_HOST_PORT docker@${DOCKER_HOST} <<-ENDX
+mount | grep -q /dev/sda1 && echo "Persistent Image exists" && exit
+echo "Partition Disk /dev/sda"
+sudo fdisk /dev/sda<<EOF
+n
+p
+1
+
+
+w
+EOF
+sudo mkfs.ext4 /dev/sda1
+sudo reboot
+ENDX
+ssh-keygen -R [${DOCKER_HOST}]:$SSH_HOST_PORT
