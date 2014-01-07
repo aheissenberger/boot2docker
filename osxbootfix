@@ -1,0 +1,29 @@
+#!/bin/sh
+export DOCKER_HOST=localhost
+VM_NAME=boot2docker-vm
+VBM=VBoxManage
+
+DOCKER_PORT=4243
+SSH_HOST_PORT=2022
+
+KEY="$HOME/.ssh/id_dsa.pub"
+
+echo "Remove existing key in known hosts"
+ssh-keygen -R [${DOCKER_HOST}]:$SSH_HOST_PORT
+
+echo "Putting your key on $DOCKER_HOST ... "
+
+if [ -f ~/.ssh/id_dsa.pub ];then
+KEYCODE=`cat $KEY`
+ssh -q -p ${SSH_HOST_PORT} docker@${DOCKER_HOST} "mkdir .ssh;echo \"$KEYCODE\" >> ~/.ssh/authorized_keys"
+fi
+echo "done"
+
+ssh -q -p $SSH_HOST_PORT docker@${DOCKER_HOST} <<-ENDX
+	sudo /usr/local/etc/init.d/docker stop;
+	echo "Upgrade docker daemon"
+	sudo wget http://get.docker.io/builds/Linux/x86_64/docker-latest -O /usr/local/bin/docker;
+	echo "listen on IP 0.0.0.0"
+	sudo sed -i -e "s/docker -d >/docker -d -H="0.0.0.0:4243" -api-enable-cors >/" /usr/local/etc/init.d/docker;
+	sudo /usr/local/etc/init.d/docker start;
+ENDX
