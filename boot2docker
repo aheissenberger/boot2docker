@@ -55,7 +55,7 @@ init() {
         --hwvirtex on \
         --vtxvpid on \
         --vtxux on \
-        --nestedpaging on \
+        --nestedpaging on --largepages on \
         --firmware bios \
         --bioslogofadein off --bioslogofadeout off --bioslogodisplaytime 0 --biosbootmenu disabled \
         --boot1 dvd
