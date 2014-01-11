@@ -7,7 +7,12 @@ VBM=VBoxManage
 DOCKER_PORT=4243
 SSH_HOST_PORT=2022
 
+# remove old key
 ssh-keygen -R [${DOCKER_HOST}]:$SSH_HOST_PORT
+
+# start boot2docker
+./boot2docker up
+
 ssh -q -p $SSH_HOST_PORT docker@${DOCKER_HOST} <<-ENDX
 mount | grep -q /dev/sda1 && echo "Persistent Image exists" && exit
 echo "Partition Disk /dev/sda"
