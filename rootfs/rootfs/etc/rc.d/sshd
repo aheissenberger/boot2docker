@@ -15,6 +15,15 @@ if [ ! -f /usr/local/etc/ssh/ssh_config ]; then
 fi
 if [ ! -f /usr/local/etc/ssh/sshd_config ]; then
     mv /usr/local/etc/ssh/sshd_config.example /usr/local/etc/ssh/sshd_config
+    cat <<EOT >> /usr/local/etc/ssh/sshd_config
+Match User docker
+    AuthorizedKeysFile        /home/docker/.ssh/authorized_keys
+EOT
+	mkdir -p /home/docker/.ssh/
+	mv /usr/local/etc/ssh/docker/authorized_keys /home/docker/.ssh/authorized_keys
+	chown -R docker:docker /usr/local/etc/ssh/docker
+	chmod 700 /home/docker/.ssh
+	chmod 600 /home/docker/.ssh/authorized_keys
 fi
 
 /usr/local/etc/init.d/openssh start
