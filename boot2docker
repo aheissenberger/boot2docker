@@ -115,7 +115,7 @@ init() {
 }
 
 do_ssh() {
-pkfile=´mktemp´
+pkfile=`mktemp -t b2d`
 umask 077
 echo "-----BEGIN DSA PRIVATE KEY-----
 MIIBvAIBAAKBgQCjs5tqiAMPBoRF9jUhytG1dVwDxVKH9U2tnmOCvIyZ7RVYrbw3
