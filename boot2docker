@@ -225,6 +225,26 @@ delete() {
     $VBM unregistervm --delete $VM_NAME
 }
 
+build() {
+    if ! is_running; then
+        log "$VM_NAME needs to be running to build a new ISO."
+        exit 1
+    fi
+    builddir=$(mktemp -d -tmpdir b2d.XXXXXXX)
+    pushd $builddir
+    curl https://codeload.github.com/steeve/boot2docker/zip/master > master.zip
+    unzip master.zip
+    docker pull steeve/boot2docker-base
+    docker build -t boot2docker rootfs/
+    docker rm build-boot2docker
+    docker run -i -privileged -name build-boot2docker boot2docker
+    popd
+    docker cp build-boot2docker:/boot2docker.iso .
+    rm -R $builddir
+    stop
+    start
+}
+
 case $1 in
     init | setup) init;;
     start | up) start;;
@@ -236,5 +256,6 @@ case $1 in
     delete) delete;;
     ssh) shift; do_ssh "$@";;
     download) download_latest;;
+    build) build;;
     *) echo "Usage $0 {init|start|up|pause|stop|restart|status|info|delete|ssh|download}"; exit 1
 esac
