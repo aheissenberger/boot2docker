@@ -230,7 +230,7 @@ build() {
         log "$VM_NAME needs to be running to build a new ISO."
         exit 1
     fi
-    builddir=$(mktemp -d -tmpdir b2d.XXXXXXX)
+    builddir=$(mktemp -d -t b2d.XXXXXXX)
     pushd $builddir
     curl https://codeload.github.com/steeve/boot2docker/zip/master > master.zip
     unzip master.zip
