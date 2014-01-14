@@ -68,11 +68,11 @@ init() {
         --cableconnected1 on
     if `$VBM showvminfo $VM_NAME | grep Rule | grep ssh > /dev/null`; then
 	    $VBM modifyvm $VM_NAME \
-        	--natpf1 delete "ssh" 
+        	--natpf1 delete "ssh"
     fi
     if `$VBM showvminfo $VM_NAME | grep Rule | grep docker > /dev/null`; then
 	    $VBM modifyvm $VM_NAME \
-        	--natpf1 delete "docker" 
+        	--natpf1 delete "docker"
     fi
     $VBM modifyvm $VM_NAME \
         --nic2 hostonly \
@@ -102,7 +102,7 @@ init() {
 
     if [ ! -e $VM_DISK ]; then
         log "Creating $VM_DISK_SIZE Meg hard drive..."
-	# closemedium may complain when not needed
+        # closemedium may complain when not needed
         $VBM closemedium disk $VM_DISK > /dev/null 2>&1
         $VBM createhd --format VMDK --filename $VM_DISK --size $VM_DISK_SIZE
     fi
@@ -171,7 +171,10 @@ pause() {
 stop() {
     if is_running; then
         log "Shutting down $VM_NAME..."
-        $VBM controlvm $VM_NAME poweroff > /dev/null
+        $VBM controlvm $VM_NAME acpipowerbutton > /dev/null
+        while is_running; do
+            sleep 1
+        done
     else
         log "$VM_NAME is not running."
     fi
@@ -216,8 +219,8 @@ status() {
 
 delete() {
     if ! is_stopped; then
-	log "$VM_NAME needs to be stopped to delete it."
-	exit 1
+        log "$VM_NAME needs to be stopped to delete it."
+        exit 1
     fi
     $VBM unregistervm --delete $VM_NAME
 }
