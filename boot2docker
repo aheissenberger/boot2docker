@@ -230,19 +230,47 @@ build() {
         log "$VM_NAME needs to be running to build a new ISO."
         exit 1
     fi
-    builddir=$(mktemp -d -t b2d.XXXXXXX)
-    pushd $builddir
-    curl https://codeload.github.com/steeve/boot2docker/zip/master > master.zip
-    unzip master.zip
+    if [ -n "$1" ]; then
+        repo="$1"
+    elif [ ! -f "./rootfs/Dockerfile" ]; then
+        repo="git@github.com:steeve/boot2docker.git"
+    fi
+    if [ -n "$repo" ]; then
+        log "Create TEMPDIR."
+        builddir=$(mktemp -d -t b2d.XXXXXXX)
+        pushd $builddir
+
+        log "Download $repo."
+
+        git clone $repo .
+
+        # curl -o master.zip $repo
+        # if [ ! -f "./master.zip" ]; then
+        #     log "Download failed!"
+        #     exit
+        # fi   
+        # unzip master.zip
+        if [ ! -f "./rootfs/Dockerfile" ]; then
+            log "No Repository to build!"
+            exit
+        fi  
+    else
+        log "Use local repository."
+    fi
+
+    log "Start build"
     docker pull steeve/boot2docker-base
     docker build -t boot2docker rootfs/
     docker rm build-boot2docker
     docker run -i -privileged -name build-boot2docker boot2docker
-    popd
+    if [ -n "$repo" ]; then
+        popd
+        chmod -R 777 $builddir
+        rm -R $builddir
+    fi
     docker cp build-boot2docker:/boot2docker.iso .
-    rm -R $builddir
-    stop
-    start
+    # ToDo: replace existing ISO
+    $VBM showvminfo $VM_NAME | grep boot2docker.iso
 }
 
 case $1 in
@@ -256,6 +284,6 @@ case $1 in
     delete) delete;;
     ssh) shift; do_ssh "$@";;
     download) download_latest;;
-    build) build;;
-    *) echo "Usage $0 {init|start|up|pause|stop|restart|status|info|delete|ssh|download}"; exit 1
+    build) shift; build $1;;
+    *) echo "Usage $0 {init|start|up|pause|stop|restart|status|info|delete|ssh|download|buid}"; exit 1
 esac
