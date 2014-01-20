@@ -260,7 +260,7 @@ build() {
 
     log "Start build"
     docker pull steeve/boot2docker-base
-    docker build -t boot2docker rootfs/
+    docker build -rm -t boot2docker rootfs/
     docker rm build-boot2docker  > /dev/null 2>&1
 
     docker run -privileged -name build-boot2docker boot2docker
