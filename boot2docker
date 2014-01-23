@@ -399,5 +399,5 @@ case $1 in
     download) download_latest;;
     build) shift; build $1;;
     cmd) shift; docker_cmd "$@";;
-    *) echo "Usage $0 {init|start|up|pause|stop|restart|status|info|delete|ssh|download|buid|run}"; exit 1
+    *) echo "Usage $0 {init|start|up|pause|stop|restart|status|info|delete|ssh|download|build|cmd}"; exit 1
 esac
