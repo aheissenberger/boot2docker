@@ -1,4 +1,5 @@
 #!/bin/sh
+set -x #echo on
 VM_NAME=boot2docker-vm
 VBM=VBoxManage
 
@@ -317,6 +318,17 @@ docker_cmd() {
         CNAME=${BASH_REMATCH[1]}
         # echo "name: $CNAME"
     fi
+
+    if [[ -n "$CNAME" ]] && [[ $DCMD =~ [-]v[[:space:]]([^:\ ]*):([^:\ ]*)(:ro|:rw){0,1} ]]; then
+        MHD_ORIG=${BASH_REMATCH}
+        MHD_HD_SHARE=$(cd ${BASH_REMATCH[1]}; pwd)
+        MHD_HD_MOUNT=$(md5 -q -s "$MHD_HD_SHARE")
+        MHD_HD_MOUNT="/var/lib/docker/share/$MHD_HD_MOUNT"
+        MHD_OPTION="-v $MHD_HD_MOUNT:${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+        do_ssh "sudo mkdir -p $MHD_HD_MOUNT; sudo /usr/local/etc/init.d/nfs-client start; sudo mount 192.168.56.1:$MHD_HD_SHARE $MHD_HD_MOUNT"
+        DCMD="${DCMD/$MHD_ORIG/$MHD_OPTION}"
+    fi
+
     if [[ -n "$CNAME" ]] && [[ $DCMD =~ -p[[:space:]]([a-zA-Z0-9_\\-\\.]*):*([0-9]*):*([0-9]*)(/udp){0,1} ]]; then
         # echo $BASH_REMATCH      
         # echo ${BASH_REMATCH[1]} 
