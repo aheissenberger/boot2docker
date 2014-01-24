@@ -111,6 +111,15 @@ It is composed in three distinct steps:
 
 So the build process goes like this:
 
+`boot2docker build`
+or using this fork
+`boot2docker build git@github.com:aheissenberger/boot2docker.git`
+
+Requirement:
+* git client installed
+* docker running on your system (start with `boot2docker init`)
+
+or manually:
 ```
 # $ sudo docker build -t steeve/boot2docker-base base/
 # OR for most uses, avoid re-building and downloading lots of ubuntu packages by:
@@ -132,6 +141,15 @@ a Master Boot Record, and a partition table, so can be written to a raw device.
 ```
     sudo dd if=boot2docker.iso of=/dev/sdX
 ```
+
+Extras of this fork
+-------------------
+* NFS server & client support
+* 2nd host only network interface
+* aditional `boot2docker build <path to repository>`: build the newes ISO based on a local copy or on a link to a repository
+* `boot2docker ssh` with an ssh-key - no passwort needed
+* `boot2docker cmd` a wrapper for the docker command with magic support for mounting local directories in a container thru NFS and creating port forwarding rules - e.g.
+`boot2docker cmd run -d -p 8081:80 -name webserver -v ~/projectX:/app tutum/apache-php /run.sh
 
 FAQ
 ----
