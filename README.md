@@ -149,7 +149,7 @@ Extras of this fork
 * aditional `boot2docker build <path to repository>`: build the newes ISO based on a local copy or on a link to a repository
 * `boot2docker ssh` with an ssh-key - no passwort needed
 * `boot2docker cmd` a wrapper for the docker command with magic support for mounting local directories in a container thru NFS and creating port forwarding rules - e.g.
-`boot2docker cmd run -d -p 8081:80 -name webserver -v ~/projectX:/app tutum/apache-php /run.sh
+`boot2docker cmd run -d -p 8081:80 -name webserver -v ~/projectX:/app tutum/apache-php /run.sh`
 
 FAQ
 ----
