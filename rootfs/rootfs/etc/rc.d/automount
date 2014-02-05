@@ -1,8 +1,61 @@
 #!/bin/sh
-# This script mounts the first hard drive found on /var/lib/docker
 
-FIRST_HD=`autoscan-devices | cut -d' ' -f1`
-if [ -n "$FIRST_HD" ]; then
-    mkdir -p /var/lib/docker
-    mount /dev/$FIRST_HD /var/lib/docker
+LABEL=boot2docker-data
+MAGIC="boot2docker, please format-me"
+
+# If there is a partition with `boot2docker-data` as its label, use it and be
+# very happy. Thus, you can come along if you feel like a room without a roof.
+BOOT2DOCKER_DATA=`blkid -L $LABEL | head -n 1`
+
+if [ ! -n "$BOOT2DOCKER_DATA" ]; then
+	# Is the disk unpartitioned?, test for the 'boot2docker format-me' string
+	UNPARTITIONED_HD=`fdisk -l | grep "doesn't contain a valid partition table" | head -n 1 | sed 's/Disk \(.*\) doesn.*/\1/'`
+
+	if [ -n "$UNPARTITIONED_HD" ]; then
+		# Test for our magic string (it means that the disk was made by ./boot2docker init)
+		HEADER=`dd if=$UNPARTITIONED_HD bs=1 count=${#MAGIC} 2>/dev/null`
+
+		if [ "$HEADER" = "$MAGIC" ]; then
+			# Create the partition, format it and then mount it
+			echo "NEW boot2docker managed disk image ($UNPARTITIONED_HD): formatting it for use"
+			echo "NEW boot2docker managed disk image ($UNPARTITIONED_HD): formatting it for use" > /home/docker/log.log
+
+			# make one big partition
+			(echo n; echo p; echo 1; echo ; echo ; echo w) | fdisk $UNPARTITIONED_HD
+			BOOT2DOCKER_DATA=`echo "${UNPARTITIONED_HD}1"`
+			mkfs.ext4 -L $LABEL $BOOT2DOCKER_DATA
+		fi
+	else
+		# Pick the first ext4 as a fallback
+		# TODO: mount all Linux partitions and look for a /var/lib/docker...
+		BOOT2DOCKER_DATA=`blkid | grep 'TYPE="ext4"' | head -n 1 | sed 's/:.*//'`
+	fi
 fi
+
+if [ -n "$BOOT2DOCKER_DATA" ]; then
+	PARTNAME=`echo "$BOOT2DOCKER_DATA" | sed 's/.*\///'`
+	mkdir -p /mnt/$PARTNAME
+	mount $BOOT2DOCKER_DATA /mnt/$PARTNAME
+
+	# Just in case, the links will fail if not
+	rm -rf /var/lib/docker /var/lib/boot2docker
+	if [ -d /mnt/$PARTNAME/vm ]; then
+		# The old behavior - use the entire disk for boot2docker data
+		ln -s /mnt/$PARTNAME /var/lib/docker
+
+		# Give us a link to the new cusomisation location
+		ln -s /var/lib/docker/vm /var/lib/boot2docker
+	else
+		# Detected a disk with a normal linux install (/var/lib/docker + more))
+		mkdir -p /var/lib
+
+		mkdir -p /mnt/$PARTNAME/var/lib/docker
+		ln -s /mnt/$PARTNAME/var/lib/docker /var/lib/docker
+
+		mkdir -p /mnt/$PARTNAME/var/lib/boot2docker
+		ln -s /mnt/$PARTNAME/var/lib/boot2docker /var/lib/boot2docker
+	fi
+fi
+# /etc dirs are initialised from /usr/local, to allow the user/admin to customise
+mkdir -p /var/lib/boot2docker/etc/
+

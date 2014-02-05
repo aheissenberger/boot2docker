@@ -8,7 +8,8 @@ Download
 --------
 Head over to the [Releases Page](https://github.com/steeve/boot2docker/releases) to grab the ISO.
 
-To 'install' the ISO onto an SD card, USB-Stick or even empty hard disk, you can use ``dd if=boot2docker.iso of=/dev/sdX``.
+To 'install' the ISO onto an SD card, USB-Stick or even empty hard disk, you can
+use ``dd if=boot2docker.iso of=/dev/sdX``.
 This will create the small boot partition, and install an MBR.
 
 Demo
@@ -20,7 +21,7 @@ How to use
 ----------
 Simply boot from the ISO, and you're done. It runs on VMs and bare-metal machines.
 
-If you want your containers to persist across reboots, just attach an ext4 formatted disk to your VM, and boot2docker will automount it on `/var/lib/docker`. It will also persist the SSH keys of the machine.
+If you want your containers to persist across reboots, attach an ext4 formatted disk with the label ``boot2docker-data`` (``mkfs.ext4 -L boot2docker-data /dev/sdX5``) to your VM, and boot2docker will automount it on `/mnt/sdX` and then softlink `/mnt/sdX/var/lib/docker` to `/var/lib/docker`. It will also persist the SSH keys of the machine.
 
 boot2docker auto logs in, but if you want to SSH into the machine, the credentials are:
 
@@ -38,9 +39,10 @@ boot2docker now comes with a rather simple init script that leverage's VirtualBo
 The VM has the following specs:
 
 * CPU Cores: same as host (physical, not logical)
-* 40gb HDD (**not** initialized, see FAQ)
+* 40gb HDD (auto-initialized at first boot)
 * 1gb memory
 * Autoboots to boot2docker
+* `virtio` high performance networking
 * NAT networked (Docker `4243->4243` and SSH `22->2022` are forwarded to the host)
 
 You can customise the values of *VM_NAME*, *DOCKER_PORT*, *SSH_HOST_PORT*, *VM_DISK*, *VM_DISK_SIZE*, *VM_MEM* and *BOOT2DOCKER_ISO* by setting them in ``$HOME/.boot2docker/profile``
@@ -55,6 +57,7 @@ $ chmod +x boot2docker
 $ ./boot2docker init
 $ ./boot2docker up
 $ ./boot2docker ssh
+docker@localhost's password: tcuser
 ```
 
 If `ssh` complains about the keys:
@@ -77,11 +80,11 @@ OSX Client installation
 
 Get latest Docker OSX client binary release from docker.io:
 ```
-$ curl http://get.docker.io/builds/Darwin/x86_64/docker-latest.tgz | tar xvz
-$ chmod +x ./usr/local/bin/docker
+$ curl -o docker http://get.docker.io/builds/Darwin/x86_64/docker-latest
+$ chmod +x ./docker
 $ export DOCKER_HOST=localhost
-$ ./usr/local/bin/docker version
-$ sudo cp ./usr/local/bin/docker /usr/local/bin/
+$ ./docker version
+$ sudo cp ./docker /usr/local/bin/
 ```
 or with Homebrew ( http://brew.sh ):
 ```
@@ -92,8 +95,8 @@ $ brew install docker
 Features
 --------
 * Kernel 3.12.1 with AUFS
-* Docker 0.7.5
-* LXC 1.0-beta1
+* Docker 0.7.6
+* LXC 0.8.0
 * Container persistence via disk automount on `/var/lib/docker`
 * SSH keys persistence via disk automount
 
@@ -161,18 +164,3 @@ Run `sudo -s` as the docker user.
 **Why not CoreOS?**
 
 I got asked that question a lot, so I thought I should put it here once and for all. [CoreOS](http://coreos.com/) is targeted at building infrastructure and distributed systems. I just wanted the fastest way to boot to Docker.
-
-**Hard Disk Persistence using Virtualbox**
-
-```
-sudo -s
-fdisk /dev/sda
-n    # new primary partition
-p
-1   # first partition
-Enter  # default start
-Enter  # default end
-w  # write partition table and quit
-mkfs.ext4 /dev/sda1
-reboot
-```
