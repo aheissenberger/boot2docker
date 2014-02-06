@@ -3,7 +3,8 @@ MAINTAINER Steeve Morin "steeve.morin@gmail.com"
 
 ENV ROOTFS          /rootfs
 ENV TCL_REPO_BASE   http://tinycorelinux.net/5.x/x86
-ENV TCZ_DEPS        iptables openssl-1.0.0 openssh tar gcc_libs libnl iw acpid bash ncurses-common ncurses-terminfo ncurses ncurses-utils xz \
+ENV TCZ_DEPS        iptables openssl-1.0.0 openssh tar gcc_libs libnl iw acpid bash ncurses-common ncurses-terminfo ncurses ncurses-utils \
+                    liblzma xz \
                     expat2 openssl-1.0.0 libiconv libidn libgpg-error libgcrypt libssh2 curl git \
                     tcp_wrappers portmap nfs-utils
 
