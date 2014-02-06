@@ -11,9 +11,9 @@ ENV TCZ_DEPS        iptables \
                     acpid \
                     bash \
                     ncurses-common ncurses-terminfo ncurses ncurses-utils \
-                    liblzma xz \
+                    xz liblzma \
                     git expat2 libiconv libidn libgpg-error libgcrypt libssh2 curl \
-                    tcp_wrappers portmap nfs-utils
+                    nfs-utils tcp_wrappers portmap
 
 RUN apt-get -y install  squashfs-tools \
                         genisoimage \
