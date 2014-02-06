@@ -174,7 +174,7 @@ Ba8g4DSLDLFodM9KOOr33xpzISRYp0y6eyWCDlu+JE7+0kOBWMqqVicCFQCuBDEP
 GcQgE6LgrKBC9bbzsgHq/w==
 -----END DSA PRIVATE KEY-----
 " > $pkfile
-ssh -i $pkfile -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p $SSH_HOST_PORT docker@localhost $1
+ssh -i $pkfile -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p $SSH_HOST_PORT docker@localhost $*
 rm $pkfile
 }
 
