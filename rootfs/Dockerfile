@@ -3,9 +3,16 @@ MAINTAINER Steeve Morin "steeve.morin@gmail.com"
 
 ENV ROOTFS          /rootfs
 ENV TCL_REPO_BASE   http://tinycorelinux.net/5.x/x86
-ENV TCZ_DEPS        iptables openssl-1.0.0 openssh tar gcc_libs libnl iw acpid bash ncurses-common ncurses-terminfo ncurses ncurses-utils \
+ENV TCZ_DEPS        iptables \
+                    openssh openssl-1.0.0 \
+                    tar \
+                    gcc_libs \
+                    iw libnl \
+                    acpid \
+                    bash \
+                    ncurses-common ncurses-terminfo ncurses ncurses-utils \
                     liblzma xz \
-                    expat2 openssl-1.0.0 libiconv libidn libgpg-error libgcrypt libssh2 curl git \
+                    git expat2 libiconv libidn libgpg-error libgcrypt libssh2 curl \
                     tcp_wrappers portmap nfs-utils
 
 RUN apt-get -y install  squashfs-tools \
@@ -37,7 +44,7 @@ RUN curl -L ftp://ftp.de.debian.org/debian/pool/main/libc/libcap2/libcap2_2.22.o
 ADD lxc-0.8.0-boot2docker.patch /
 
 # Download LXC, patch it with a 0.8.0 port of @sebp's patch to properly change root from a ramdisk, compile and install
-#    curl -L https://github.com/spahl/lxc/commit/d6b2904d50cac7c44e6f490308b8dd1417281529.patch | patch -p1 && 
+# Based on https://github.com/spahl/lxc/commit/d6b2904d50cac7c44e6f490308b8dd1417281529
 RUN curl -L https://github.com/lxc/lxc/archive/lxc-0.8.0.tar.gz | tar -C / -xz && \
     cd /lxc-lxc-0.8.0 && \
     patch -p2 < /lxc-0.8.0-boot2docker.patch && \
