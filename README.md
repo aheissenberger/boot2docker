@@ -2,7 +2,7 @@ boot2docker
 ===========
 
 boot2docker is a lightweight Linux distribution based on [Tiny Core Linux](http://tinycorelinux.net) made specifically to run [Docker](https://www.docker.io/) containers.
-It runs completely from RAM, weighs ~24MB and boots in ~5-6s (YMMV).
+It runs completely from RAM, weighs ~27MB and boots in ~5-6s (YMMV).
 
 Download
 --------
@@ -97,7 +97,7 @@ There's also a [Puppet module](https://github.com/morgante/puppet-docker) availa
 Features
 --------
 * Kernel 3.12.1 with AUFS
-* Docker 0.7.6
+* Docker 0.8.0
 * LXC 0.8.0
 * Container persistence via disk automount on `/var/lib/docker`
 * SSH keys persistence via disk automount
