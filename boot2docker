@@ -22,6 +22,17 @@ test -f "$HOME/.boot2docker/profile" && . "$HOME/.boot2docker/profile"
 : ${BOOT2DOCKER_upperIPAddress:=192.168.59.254}
 : ${BOOT2DOCKER_DHCP_Enabled:=Yes}
 
+#Check if all requireq command exists
+cmd_exists() {
+    command -v $1 >/dev/null 2>&1 || { echo >&2 "command '$1' is required but not installed.  Aborting."; exit 1; }
+}
+cmd_exists nc
+cmd_exists curl
+cmd_exists grep
+cmd_exists head
+cmd_exists tr
+cmd_exists $VBM
+
 mkdir -p "${BOOT2DOCKER_CFG_DIR}"
 
 IFS=. read -r i1 i2 i3 i4 <<< "$BOOT2DOCKER_HOST_IP"
