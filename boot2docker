@@ -1,18 +1,19 @@
 #!/usr/bin/env sh
 
 #Load the user's profile and then default any remaining values
-test -f "$HOME/.boot2docker/profile" && . "$HOME/.boot2docker/profile"
+BOOT2DOCKER_CFG_DIR=${HOME}/.boot2docker
+BOOT2DOCKER_PROFILE=${BOOT2DOCKER_CFG_DIR}/profile
+test -f "$BOOT2DOCKER_PROFILE" && . "$BOOT2DOCKER_PROFILE"
 : ${VM_NAME:=boot2docker-vm}
 : ${VBM:=VBoxManage}
 
 : ${DOCKER_PORT:=4243}
 : ${SSH_HOST_PORT:=2022}
-: ${BOOT2DOCKER_CFG_DIR:=${HOME}/.boot2docker}
 
 : ${VM_DISK_SIZE:=40000}
 : ${VM_MEM:=1024}
 
-: ${VM_DISK:=${BOOT2DOCKER_CFG_DIR}/boot2docker.vmdk}
+: ${VM_DISK:=${BOOT2DOCKER_CFG_DIR}/${VM_NAME}.vmdk}
 : ${BOOT2DOCKER_ISO:=${BOOT2DOCKER_CFG_DIR}/boot2docker.iso}
 
 : ${BOOT2DOCKER_HOST_IP:=192.168.59.1}
@@ -202,12 +203,12 @@ init() {
     esac
 
     if `nc -z -w2 localhost $DOCKER_PORT > /dev/null` ; then
-        log "DOCKER_PORT=$DOCKER_PORT on localhost is used by an other process! Change the port to a free port."
+        log "DOCKER_PORT=$DOCKER_PORT on localhost is used by an other process! Set the DOCKER_PORT in $BOOT2DOCKER_PROFILE free port."
         exit 1
     fi
 
     if `nc -z -w2 localhost $SSH_HOST_PORT > /dev/null` ; then
-        log "SSH_HOST_PORT=$SSH_HOST_PORT on localhost is used by an other process! Change the port to a free port."
+        log "SSH_HOST_PORT=$SSH_HOST_PORT on localhost is used by an other process! Set the SSH_HOST_PORT in $BOOT2DOCKER_PROFILE free port."
         exit 1
     fi
 
@@ -342,11 +343,11 @@ wait_vm() {
     done
 }
 
-pause() {
+suspend() {
     is_installed || status
     if is_running; then
-        log "Pausing $VM_NAME..."
-        $VBM controlvm $VM_NAME pause > /dev/null
+        log "Suspending $VM_NAME..."
+        $VBM controlvm $VM_NAME savestate > /dev/null
     else
         log "$VM_NAME is not running."
     fi
@@ -394,6 +395,10 @@ is_paused() {
     info | grep "State:\s\+paused" > /dev/null
 }
 
+is_suspended() {
+    info | grep "State:\s\+saved" > /dev/null
+}
+
 is_stopped() {
     info | grep "State:\s\+powered off" > /dev/null
 }
@@ -407,10 +412,16 @@ status() {
         log "$VM_NAME is running."
         exit 0
     elif is_paused; then
+        log "$VM_NAME is paused."
+        exit 1
+    elif is_suspended; then
         log "$VM_NAME is suspended."
         exit 1
     elif is_stopped; then
         log "$VM_NAME is stopped."
+        exit 1
+    elif is_aborted; then
+        log "$VM_NAME is aborted."
         exit 1
     else
         log "$VM_NAME does not exist."
@@ -594,7 +605,7 @@ docker_cmd() {
 case $1 in
     init | setup) init;;
     start | up) start;;
-    pause | suspend) pause;;
+    save | pause | suspend) suspend;;
     stop | halt | down) stop;;
     restart) restart;;
     status) status;;
@@ -604,5 +615,5 @@ case $1 in
     download) download_latest;;
     build) shift; build $1;;
     cmd) shift; docker_cmd "$@";;
-    *) echo "Usage $0 {init|start|up|pause|stop|restart|status|info|delete|ssh|download|build|cmd}"; exit 1
+    *) echo "Usage $0 {init|start|up|save|pause|stop|restart|status|info|delete|ssh|download|build|cmd}"; exit 1
 esac
