@@ -22,7 +22,7 @@ test -f "$HOME/.boot2docker/profile" && . "$HOME/.boot2docker/profile"
 : ${BOOT2DOCKER_upperIPAddress:=192.168.59.254}
 : ${BOOT2DOCKER_DHCP_Enabled:=Yes}
 
-#Check if all requireq command exists
+#Check if all required commands exist
 cmd_exists() {
     command -v $1 >/dev/null 2>&1 || { echo >&2 "command '$1' is required but not installed.  Aborting."; exit 1; }
 }
