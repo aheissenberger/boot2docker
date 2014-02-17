@@ -23,6 +23,9 @@ test -f "$BOOT2DOCKER_PROFILE" && . "$BOOT2DOCKER_PROFILE"
 : ${BOOT2DOCKER_upperIPAddress:=192.168.59.254}
 : ${BOOT2DOCKER_DHCP_Enabled:=Yes}
 
+# Shared folder type [nfs|sshfs]
+: ${BOOT2DOCKER_SHAREDFOLDER_type:=sshfs}
+
 #Check if all required commands exist
 cmd_exists() {
     while [ -n "$1" ]
@@ -506,30 +509,36 @@ docker_cmd() {
         MHD_HD_MOUNT="/var/lib/docker/share/$MHD_HD_MOUNT"
         MHD_OPTION="-v $MHD_HD_MOUNT:${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
         CUGID=$(id)
-        if [[ $CUGID =~ uid\=([0-9]+)\(.*\)[[:space:]]gid\=([0-9]+) ]]; then
+        if [[ $CUGID =~ uid\=([0-9]+)\((.*)\)[[:space:]]gid\=([0-9]+) ]]; then
             MUID=${BASH_REMATCH[1]}
-            MGID=${BASH_REMATCH[2]}
+            MUNAME=${BASH_REMATCH[2]}
+            MGID=${BASH_REMATCH[3]}
         else
             log "Could not get User ID"
             exit 1
         fi
-        log "nfs /etc/exports add $MHD_HD_SHARE"
+        if [ "$BOOT2DOCKER_SHAREDFOLDER_type" == "nfs" ]; then
+            log "nfs /etc/exports add $MHD_HD_SHARE"
 
-        SHARE_ESCAPED="${MHD_HD_SHARE//\//\/}"
-        MHD_HD_EXPORT_CMD="sudo sed -i.bak '/\"$SHARE_ESCAPED\"/d' /etc/exports; sudo echo \"\\\"$MHD_HD_SHARE\\\" -network $BOOT2DOCKER_Network -mask $BOOT2DOCKER_NetworkMask -alldirs -mapall=$MUID:$MGID\" >> /etc/exports; sudo nfsd update"
-        unamestr=`uname`
+            SHARE_ESCAPED="${MHD_HD_SHARE//\//\/}"
+            MHD_HD_EXPORT_CMD="sudo sed -i.bak '/\"$SHARE_ESCAPED\"/d' /etc/exports; sudo echo \"\\\"$MHD_HD_SHARE\\\" -network $BOOT2DOCKER_Network -mask $BOOT2DOCKER_NetworkMask -alldirs -mapall=$MUID:$MGID\" >> /etc/exports; sudo nfsd update"
+            unamestr=`uname`
 
-        if [[ ! `sudo -v` ]] && [[ "$unamestr" == "Darwin" ]]; then
-            MHD_HD_EXPORT_CMD_TMP=$(mktemp -t b2d)
-            echo $MHD_HD_EXPORT_CMD > $MHD_HD_EXPORT_CMD_TMP
-            osascript -e "do shell script \"sh $MHD_HD_EXPORT_CMD_TMP\" with administrator privileges"
-            rm $MHD_HD_EXPORT_CMD_TMP
+            if [[ ! `sudo -v` ]] && [[ "$unamestr" == "Darwin" ]]; then
+                MHD_HD_EXPORT_CMD_TMP=$(mktemp -t b2d)
+                echo $MHD_HD_EXPORT_CMD > $MHD_HD_EXPORT_CMD_TMP
+                osascript -e "do shell script \"sh $MHD_HD_EXPORT_CMD_TMP\" with administrator privileges"
+                rm $MHD_HD_EXPORT_CMD_TMP
+            else
+                $MHD_HD_EXPORT_CMD
+            fi
+            log "mount $MHD_HD_SHARE to $MHD_HD_MOUNT"
+            # sudo /bin/bash -c echo "\"$MHD_HD_SHARE\" -network 192.168.56.0 -mask 255.255.255.0 -alldirs -mapall=502:20" >> /etc/exports
+            do_ssh "sudo mkdir -p $MHD_HD_MOUNT; sudo /usr/local/etc/init.d/nfs-client start; sudo mount $BOOT2DOCKER_HOST_IP:$MHD_HD_SHARE $MHD_HD_MOUNT"
         else
-            $MHD_HD_EXPORT_CMD
+            do_ssh "sudo mkdir -p $MHD_HD_MOUNT; sudo tce-load -wi sshfs-fuse"
+            do_ssh "sudo sshfs -o uid=0 -o gid=0 $MUNAME@$BOOT2DOCKER_HOST_IP:$MHD_HD_SHARE $MHD_HD_MOUNT"
         fi
-        log "mount $MHD_HD_SHARE to $MHD_HD_MOUNT"
-        # sudo /bin/bash -c echo "\"$MHD_HD_SHARE\" -network 192.168.56.0 -mask 255.255.255.0 -alldirs -mapall=502:20" >> /etc/exports
-        do_ssh "sudo mkdir -p $MHD_HD_MOUNT; sudo /usr/local/etc/init.d/nfs-client start; sudo mount $BOOT2DOCKER_HOST_IP:$MHD_HD_SHARE $MHD_HD_MOUNT"
         DCMD="${DCMD/$MHD_ORIG/$MHD_OPTION}"
     fi
 
