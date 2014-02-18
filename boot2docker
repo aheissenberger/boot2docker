@@ -24,7 +24,7 @@ test -f "$BOOT2DOCKER_PROFILE" && . "$BOOT2DOCKER_PROFILE"
 : ${BOOT2DOCKER_DHCP_Enabled:=Yes}
 
 # Shared folder type [nfs|sshfs]
-: ${BOOT2DOCKER_SHAREDFOLDER_type:=sshfs}
+: ${BOOT2DOCKER_SHAREDFOLDER_type:=nfs}
 
 #Check if all required commands exist
 cmd_exists() {
@@ -524,7 +524,8 @@ docker_cmd() {
             MHD_HD_EXPORT_CMD="sudo sed -i.bak '/\"$SHARE_ESCAPED\"/d' /etc/exports; sudo echo \"\\\"$MHD_HD_SHARE\\\" -network $BOOT2DOCKER_Network -mask $BOOT2DOCKER_NetworkMask -alldirs -mapall=$MUID:$MGID\" >> /etc/exports; sudo nfsd update"
             unamestr=`uname`
 
-            if [[ ! `sudo -v` ]] && [[ "$unamestr" == "Darwin" ]]; then
+            sudo -v
+            if [[ "$?" == "1" ]] && [[ "$unamestr" == "Darwin" ]]; then
                 MHD_HD_EXPORT_CMD_TMP=$(mktemp -t b2d)
                 echo $MHD_HD_EXPORT_CMD > $MHD_HD_EXPORT_CMD_TMP
                 osascript -e "do shell script \"sh $MHD_HD_EXPORT_CMD_TMP\" with administrator privileges"
