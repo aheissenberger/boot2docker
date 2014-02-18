@@ -199,6 +199,7 @@ mod_bashprofile() {
         sed -i.bak '/(export DOCKER_HOST=|docker.io)/d' $HOME/.bash_profile; 
         echo "\n### docker.io" >> $HOME/.bash_profile
         echo "export DOCKER_HOST=tcp://localhost:$DOCKER_PORT" >> $HOME/.bash_profile
+        . $HOME/.bash_profile
     fi
 }
 
