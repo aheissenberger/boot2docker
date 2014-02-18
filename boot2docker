@@ -16,6 +16,7 @@ test -f "$BOOT2DOCKER_PROFILE" && . "$BOOT2DOCKER_PROFILE"
 : ${VM_DISK:=${BOOT2DOCKER_CFG_DIR}/${VM_NAME}.vmdk}
 : ${BOOT2DOCKER_ISO:=${BOOT2DOCKER_CFG_DIR}/boot2docker.iso}
 
+: ${BOOT2DOCKER_HOST_NAME:=docker}
 : ${BOOT2DOCKER_HOST_IP:=192.168.59.1}
 : ${BOOT2DOCKER_DHCP_IP:=192.168.59.100}
 : ${BOOT2DOCKER_NetworkMask:=255.255.255.0}
@@ -191,6 +192,40 @@ ask() {
     done
 }
 
+mod_bashprofile() {
+    grep -q "export DOCKER_HOST=" $HOME/.bash_profile
+    if [[ "$?" == "1" ]]; then
+        log "add 'export DOCKER_HOST=tcp://localhost:$DOCKER_PORT' to $HOME/.bash_profile"
+        sed -i.bak '/(export DOCKER_HOST=|docker.io)/d' $HOME/.bash_profile; 
+        echo "\n### docker.io" >> $HOME/.bash_profile
+        echo "export DOCKER_HOST=tcp://localhost:$DOCKER_PORT" >> $HOME/.bash_profile
+    fi
+}
+
+mod_hosts() {
+
+    DOCKER_HOST_IP=$(do_ssh ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+
+    grep -q "$DOCKER_HOST_IP\s\+$BOOT2DOCKER_HOST_NAME" /etc/hosts
+    if [[ "$?" == "1" ]]; then
+        log "add '$BOOT2DOCKER_HOST_NAME $DOCKER_HOST_IP' to /etc/hosts"
+
+        MHD_HD_EXPORT_CMD="sudo sed -i.bak '/$BOOT2DOCKER_HOST_NAME/d' /etc/hosts; sudo echo \"$DOCKER_HOST_IP $BOOT2DOCKER_HOST_NAME\" >> /etc/hosts"
+        if [[ "$unamestr" == "Darwin" ]]; then
+            MHD_HD_EXPORT_CMD="$MHD_HD_EXPORT_CMD; sudo killall -HUP mDNSResponder";
+        fi
+        sudo -v
+        if [[ "$?" == "1" ]] && [[ "$unamestr" == "Darwin" ]]; then
+            MHD_HD_EXPORT_CMD_TMP=$(mktemp -t b2d)
+            echo $MHD_HD_EXPORT_CMD > $MHD_HD_EXPORT_CMD_TMP
+            osascript -e "do shell script \"sh $MHD_HD_EXPORT_CMD_TMP\" with administrator privileges"
+            rm $MHD_HD_EXPORT_CMD_TMP
+        else
+            $MHD_HD_EXPORT_CMD
+        fi
+    fi
+}
+
 init() {
 
     if `$VBM showvminfo $VM_NAME > /dev/null 2>&1`; then
@@ -335,6 +370,8 @@ start() {
             log "Starting $VM_NAME..."
             $VBM startvm $VM_NAME --type headless > /dev/null &
             wait_vm
+            mod_hosts
+            mod_bashprofile
             log "Started."
         fi
     else
