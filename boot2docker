@@ -523,7 +523,7 @@ build() {
     if [ -n "$1" ]; then
         repo="$1"
     elif [ ! -f "./rootfs/Dockerfile" ]; then
-        repo="git@github.com:steeve/boot2docker.git"
+        repo="git@github.com:boot2docker/boot2docker.git"
     fi
     if [ -n "$repo" ]; then
         log "Create TEMPDIR."
