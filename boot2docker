@@ -27,6 +27,13 @@ test -f "$BOOT2DOCKER_PROFILE" && . "$BOOT2DOCKER_PROFILE"
 # Shared folder type [nfs|sshfs]
 : ${BOOT2DOCKER_SHAREDFOLDER_type:=nfs}
 
+log() {
+    echo "[`date +"%Y-%m-%d %H:%M:%S"`] ${*}"
+}
+error() {
+    log "${*}"
+}
+
 #Check if all required commands exist
 cmd_exists() {
     while [ -n "$1" ]
@@ -65,12 +72,8 @@ download_latest() {
         curl -L -o "$BOOT2DOCKER_ISO" "https://github.com/boot2docker/boot2docker/releases/download/$LATEST_RELEASE/boot2docker.iso"
         log "Done"
     else
-        log "Could not get latest release name! Cannot download boot2docker.iso."
+        error "Could not get latest release name! Cannot download boot2docker.iso."
     fi
-}
-
-log() {
-    echo "[`date +"%Y-%m-%d %H:%M:%S"`] ${*}"
 }
 
 get_hostonlyif_name() {
