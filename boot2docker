@@ -30,15 +30,15 @@ test -f "$BOOT2DOCKER_PROFILE" && . "$BOOT2DOCKER_PROFILE"
 log() {
     echo "[`date +"%Y-%m-%d %H:%M:%S"`] ${*}"
 }
-error() {
-    log "${*}"
+logerror() {
+    log "$(tput setaf 1)${*}$(tput sgr0)"
 }
 
 #Check if all required commands exist
 cmd_exists() {
     while [ -n "$1" ]
     do
-        command -v $1 >/dev/null 2>&1 || { echo >&2 "command '$1' is required but not installed.  Aborting."; notOK=1; [[ "$1" == "$VBM" ]] && echo "You need to install VirtualBox https://www.virtualbox.org!"; }
+        command -v $1 >/dev/null 2>&1 || { echo >&2 "$(tput setaf 1)command '$1' is required but not installed.  Aborting.$(tput sgr0)"; notOK=1; [[ "$1" == "$VBM" ]] && echo "You need to install VirtualBox https://www.virtualbox.org!"; }
         shift
     done
     [ -n "$notOK" ] && exit 1
@@ -70,9 +70,13 @@ download_latest() {
         log "Latest version is $LATEST_RELEASE, downloading..."
         mkdir -p "${BOOT2DOCKER_ISO%/*}"
         curl -L -o "$BOOT2DOCKER_ISO" "https://github.com/boot2docker/boot2docker/releases/download/$LATEST_RELEASE/boot2docker.iso"
-        log "Done"
+        if [ "$?" == "0" ]; then
+            log "Done"
+        else
+            logerror "Failed to download boot2docker.iso."
+        fi
     else
-        error "Could not get latest release name! Cannot download boot2docker.iso."
+        logerror "Could not get latest release name! Cannot download boot2docker.iso."
     fi
 }
 
@@ -138,7 +142,7 @@ create_hostonlyif() {
                 --upperip $BOOT2DOCKER_upperIPAddress \
                 --enable
         else
-            log "Failed to update host only interface with DHCP settings!"
+            logerror "Failed to update host only interface with DHCP settings!"
             exit 1
         fi
     fi
@@ -150,7 +154,7 @@ create_hostonlyif() {
                 --ip $BOOT2DOCKER_HOST_IP \
                 --netmask $BOOT2DOCKER_NetworkMask
         else
-            log "Failed to create host only interface!"
+            logerror "Failed to create host only interface!"
             exit 1
         fi
         $VBM dhcpserver add \
@@ -247,12 +251,12 @@ init() {
     esac
 
     if `nc -z -w2 localhost $DOCKER_PORT > /dev/null` ; then
-        log "DOCKER_PORT=$DOCKER_PORT on localhost is used by an other process! Set the DOCKER_PORT in $BOOT2DOCKER_PROFILE free port."
+        logerror "DOCKER_PORT=$DOCKER_PORT on localhost is used by an other process! Set the DOCKER_PORT in $BOOT2DOCKER_PROFILE free port."
         exit 1
     fi
 
     if `nc -z -w2 localhost $SSH_HOST_PORT > /dev/null` ; then
-        log "SSH_HOST_PORT=$SSH_HOST_PORT on localhost is used by an other process! Set the SSH_HOST_PORT in $BOOT2DOCKER_PROFILE free port."
+        logerror "SSH_HOST_PORT=$SSH_HOST_PORT on localhost is used by an other process! Set the SSH_HOST_PORT in $BOOT2DOCKER_PROFILE free port."
         exit 1
     fi
 
@@ -281,7 +285,7 @@ init() {
         --firmware bios \
         --bioslogofadein off --bioslogofadeout off --bioslogodisplaytime 0 --biosbootmenu disabled \
         --boot1 dvd; then
-      echo "An error occured, upgrade VirtualBox or try to disable some options"
+      logerror "An error occured, upgrade VirtualBox or try to disable some options"
       delete
       exit 1
     fi
@@ -511,7 +515,7 @@ delete() {
 
 build() {
     if ! is_running; then
-        log "$VM_NAME needs to be running to build a new ISO."
+        logerror "$VM_NAME needs to be running to build a new ISO."
         exit 1
     fi
     if [ -n "$1" ]; then
@@ -583,7 +587,7 @@ docker_cmd() {
             MUNAME=${BASH_REMATCH[2]}
             MGID=${BASH_REMATCH[3]}
         else
-            log "Could not get User ID"
+            logerror "Could not get User ID"
             exit 1
         fi
         if [ "$BOOT2DOCKER_SHAREDFOLDER_type" == "nfs" ]; then
