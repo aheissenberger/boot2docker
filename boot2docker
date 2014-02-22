@@ -36,7 +36,7 @@ cmd_exists() {
     done
     [ -n "$notOK" ] && exit 1
 }
-cmd_exists bc nc curl grep head tr $VBM
+cmd_exists bc nc curl grep head tr $VBM unzip
 
 mkdir -p "${BOOT2DOCKER_CFG_DIR}"
 
