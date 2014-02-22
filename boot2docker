@@ -681,8 +681,7 @@ docker_cmd() {
             $VBM controlvm $VM_NAME setlinkstate1 on
         fi
     else
-        echo "missed"
-        docker $1
+        docker $DCMD
     fi
 }
 
