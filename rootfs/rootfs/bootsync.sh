@@ -9,6 +9,10 @@
 # Automount a hard drive
 /etc/rc.d/automount
 
+# Mount cgroups hierarchy
+/etc/rc.d/cgroupfs-mount
+# see https://github.com/tianon/cgroupfs-mount
+
 mkdir -p /var/lib/boot2docker/log
 
 #import settings from profile (or unset them)
@@ -39,6 +43,11 @@ fi
 
 # Launch Docker
 /etc/rc.d/docker
+
+# Allow local bootsync.sh customisation
+if [ -e /var/lib/boot2docker/bootsync.sh ]; then
+    /var/lib/boot2docker/bootsync.sh
+fi
 
 # Allow local HD customisation
 if [ -e /var/lib/boot2docker/bootlocal.sh ]; then
