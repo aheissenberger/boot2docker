@@ -203,7 +203,7 @@ mod_bashprofile() {
     grep -q "export DOCKER_HOST=" $HOME/.bash_profile
     if [[ "$?" == "1" ]]; then
         log "add 'export DOCKER_HOST=tcp://localhost:$DOCKER_PORT' to $HOME/.bash_profile"
-        sed -i.bak -e '/(export DOCKER_HOST=|docker.io)/d' $HOME/.bash_profile; 
+        sed -i .bak -E '/(export DOCKER_HOST=|docker.io)/d' $HOME/.bash_profile; 
         echo "\n### docker.io" >> $HOME/.bash_profile
         echo "export DOCKER_HOST=tcp://localhost:$DOCKER_PORT" >> $HOME/.bash_profile
         . $HOME/.bash_profile
@@ -218,7 +218,7 @@ mod_hosts() {
     if [[ "$?" == "1" ]]; then
         log "add '$BOOT2DOCKER_HOST_NAME $DOCKER_HOST_IP' to /etc/hosts"
 
-        MHD_HD_EXPORT_CMD="sudo sed -i.bak -e '/$BOOT2DOCKER_HOST_NAME/d' /etc/hosts; sudo echo \"$DOCKER_HOST_IP $BOOT2DOCKER_HOST_NAME\" >> /etc/hosts"
+        MHD_HD_EXPORT_CMD="sudo sed -i .bak -E '/$BOOT2DOCKER_HOST_NAME/d' /etc/hosts; sudo echo \"$DOCKER_HOST_IP $BOOT2DOCKER_HOST_NAME\" >> /etc/hosts"
         if [[ "$unamestr" == "Darwin" ]]; then
             MHD_HD_EXPORT_CMD="$MHD_HD_EXPORT_CMD; sudo killall -HUP mDNSResponder";
         fi
@@ -361,7 +361,7 @@ ssh_copy_id() {
             KEYCODE="ssh-dss AAAAB3NzaC1kc3MAAACBAKOzm2qIAw8GhEX2NSHK0bV1XAPFUof1Ta2eY4K8jJntFVitvDceo/XIZ2Ga5r0MqkTEmpOUir/GixaoB5FkMeb23SYVPWhb58nK18XUsV426MN04hp0T5SH6AqpJB5/QNdt0VFzsl2sbkUuuKKFvav8+atg2oBmF+dd8BnphmBxAAAAFQDJQQmXZQQjnJZyxKU1ljqA3bmIeQAAAIEAndobYS0psm3rkm3j0LdDe/W8j8RMnTjT0/pciMWTanQhY7MiItI8jjMxKRaX1sLAVzKEQ3g2CT5NKYixqaWF4Kmwzq0SZ4fGEGcG9Xtr3kiNPKIoEb7aTB4xBql6GkG9Kewfv9alc0/EuF9k2r6rq+Nls9C9niWGoQDs6KVKEhUAAACAAv8Px1V4tCJwPxnge+PTddeRNhD0Lwd6OpaKMo55u3qxpM+77M8q84UpaNaX3dyKOHEVvoh4DvLEnAr9cPbZDG/pC39dsw8kOS/88sR+WGyu1hc05vyUBa8g4DSLDLFodM9KOOr33xpzISRYp0y6eyWCDlu+JE7+0kOBWMqqVic= docker@localhost"
         fi
     fi
-    do_ssh "mkdir -p ~/.ssh; echo \"$KEYCODE\" >> ~/.ssh/authorized_keys; sudo mkdir -p /var/lib/boot2docker/home/.ssh; sudo cp /home/docker/.ssh/* /var/lib/boot2docker/home/.ssh/;  [[ -f /var/lib/boot2docker/bootlocal.sh ]] && sudo sed -i.bak -e \"/# persist authorized_keys/d\" /var/lib/boot2docker/bootlocal.sh; echo 'echo \"sudo mkdir -p /home/docker/.ssh; sudo cp /var/lib/boot2docker/home/.ssh/* /home/docker/.ssh/; sudo chown -R docker:staff /home/docker/.ssh; # persist authorized_keys\" >> /var/lib/boot2docker/bootlocal.sh ; chmod +x /var/lib/boot2docker/bootlocal.sh' | sudo sh"
+    do_ssh "mkdir -p ~/.ssh; echo \"$KEYCODE\" >> ~/.ssh/authorized_keys; sudo mkdir -p /var/lib/boot2docker/home/.ssh; sudo cp /home/docker/.ssh/* /var/lib/boot2docker/home/.ssh/;  [[ -f /var/lib/boot2docker/bootlocal.sh ]] && sudo sed -i .bak -E \"/# persist authorized_keys/d\" /var/lib/boot2docker/bootlocal.sh; echo 'echo \"sudo mkdir -p /home/docker/.ssh; sudo cp /var/lib/boot2docker/home/.ssh/* /home/docker/.ssh/; sudo chown -R docker:staff /home/docker/.ssh; # persist authorized_keys\" >> /var/lib/boot2docker/bootlocal.sh ; chmod +x /var/lib/boot2docker/bootlocal.sh' | sudo sh"
 }
 
 do_ssh() {
@@ -398,7 +398,7 @@ start() {
             $VBM startvm $VM_NAME --type headless > /dev/null &
             wait_vm
             mod_hosts
-            mod_bashprofile
+            mod_profile
             log "Started."
         fi
     else
@@ -594,7 +594,7 @@ docker_cmd() {
             log "nfs /etc/exports add $MHD_HD_SHARE"
 
             SHARE_ESCAPED="${MHD_HD_SHARE//\//\/}"
-            MHD_HD_EXPORT_CMD="sudo sed -i.bak -e '/\"$SHARE_ESCAPED\"/d' /etc/exports; sudo echo \"\\\"$MHD_HD_SHARE\\\" -network $BOOT2DOCKER_Network -mask $BOOT2DOCKER_NetworkMask -alldirs -mapall=$MUID:$MGID\" >> /etc/exports; sudo nfsd update"
+            MHD_HD_EXPORT_CMD="sudo sed -i .bak -E '/\"$SHARE_ESCAPED\"/d' /etc/exports; sudo echo \"\\\"$MHD_HD_SHARE\\\" -network $BOOT2DOCKER_Network -mask $BOOT2DOCKER_NetworkMask -alldirs -mapall=$MUID:$MGID\" >> /etc/exports; sudo nfsd update"
 
             sudo -v
             if [[ "$?" == "1" ]] && [[ "$unamestr" == "Darwin" ]]; then
