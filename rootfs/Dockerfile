@@ -21,6 +21,7 @@ RUN apt-get -y install  squashfs-tools \
                         xorriso \
                         syslinux \
                         automake \
+                        module-init-tools \
                         pkg-config
 
 # Make the ROOTFS
@@ -80,8 +81,70 @@ RUN cd /linux-kernel && \
     cd /aufs-util && \
     git checkout aufs3.9 && \
     CPPFLAGS="-m32 -I/tmp/kheaders/include" CLFAGS=$CPPFLAGS LDFLAGS=$CPPFLAGS make && \
-    DESTDIR=$ROOTFS make install && \
-    rm -rf /tmp/kheaders
+    DESTDIR=$ROOTFS make install
+
+# create and add virtualbox guest modules
+ADD VBoxLinuxAdditions.run /
+RUN export KERNEL=$( uname -r ) && \
+    mkdir -p /lib/modules/${KERNEL} && \
+    ln -s /linux-kernel /lib/modules/${KERNEL}/build && \
+    chmod +x /VBoxLinuxAdditions.run && \
+    sh "/VBoxLinuxAdditions.run"
+# || echo "failed ME"
+RUN  export DEFAULT_FILE_NAMES=" \
+    /usr/bin/vboxadd-xclient \
+    /usr/bin/VBoxClient \
+    /usr/bin/VBoxControl \
+    /usr/sbin/vbox-greeter \
+    /usr/sbin/vboxadd-timesync \
+    /usr/sbin/vboxadd-service \
+    /usr/sbin/VBoxService \
+    /sbin/mount.vboxsf \
+    /usr/lib/VBoxOGLarrayspu.so \
+    /usr/lib64/VBoxOGLarrayspu.so \
+    /usr/lib/VBoxOGLcrutil.so \
+    /usr/lib64/VBoxOGLcrutil.so \
+    /usr/lib/VBoxOGLerrorspu.so \
+    /usr/lib64/VBoxOGLerrorspu.so \
+    /usr/lib/VBoxOGLfeedbackspu.so \
+    /usr/lib64/VBoxOGLfeedbackspu.so \
+    /usr/lib/VBoxOGLpackspu.so \
+    /usr/lib64/VBoxOGLpackspu.so \
+    /usr/lib/VBoxOGLpassthroughspu.so \
+    /usr/lib64/VBoxOGLpassthroughspu.so \
+    /usr/lib/VBoxOGL.so \
+    /usr/lib64/VBoxOGL.so \
+    /usr/share/xgreeters/vbox-greeter.desktop \
+    /etc/X11/Xsession.d/98vboxadd-xclient \
+    /etc/X11/xinit.d/98vboxadd-xclient \
+    /etc/X11/xinit/xinitrc.d/98vboxadd-xclient.sh \
+    /usr/bin/VBoxRandR \
+    /usr/bin/VBoxClient-all \
+    /etc/xdg/autostart/vboxclient.desktop \
+    /usr/share/autostart/vboxclient.desktop \
+    /etc/udev/rules.d/60-vboxadd.rules \
+    /usr/share/xserver-xorg/pci/vboxvideo.ids \
+    /etc/hal/fdi/policy/90-vboxguest.fdi \
+    /etc/udev/rules.d/70-xorg-vboxmouse.rules \
+    /usr/share/hal/fdi/policy/20thirdparty/90-vboxguest.fdi \
+    /usr/lib/X11/xorg.conf.d/50-vboxmouse.conf \
+    /usr/share/X11/xorg.conf.d/50-vboxmouse.conf \
+    /usr/lib/dri/vboxvideo_dri.so \
+    /usr/lib64/dri/vboxvideo_dri.so \
+    /usr/lib64/xorg/modules/drivers/vboxvideo_drv.so \
+    /usr/lib/xorg/modules/drivers/vboxvideo_drv.so \
+    /usr/X11R6/lib64/modules/drivers/vboxvideo_drv.so \
+    /usr/X11R6/lib/modules/drivers/vboxvideo_drv.so \
+    /usr/X11R6/lib/X11/modules/drivers/vboxvideo_drv.so \
+    /usr/lib64/xorg/modules/input/vboxmouse_drv.so \
+    /usr/lib/xorg/modules/input/vboxmouse_drv.so \
+    /usr/X11R6/lib64/modules/input/vboxmouse_drv.so \
+    /usr/X11R6/lib/modules/input/vboxmouse_drv.so \
+    /usr/X11R6/lib/X11/modules/input/vboxmouse_drv.so" && \
+    for i in $DEFAULT_FILE_NAMES; do test -e "$i" && echo "F:$i"; done ; echo "OK"
+
+
+
 
 # Download the rootfs, don't unpack it though:
 RUN curl -L -o /tcl_rootfs.gz $TCL_REPO_BASE/release/distribution_files/rootfs.gz
