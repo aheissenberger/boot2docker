@@ -262,7 +262,9 @@ init() {
 
     log "Creating VM $VM_NAME"
     $VBM createvm --name $VM_NAME --register
-
+    log "Apply interim patch to VM $VM_NAME (https://www.virtualbox.org/ticket/12748)"
+    $VBM setextradata $VM_NAME VBoxInternal/CPUM/EnableHVP 1
+    
     log "Setting VM settings"
     TXUX_SUPPORT=""
     if $($VBM modifyvm|grep -q "\-\-vtxux"); then
@@ -464,23 +466,23 @@ is_installed() {
 }
 
 is_running() {
-    info | grep "State:\s\+running" > /dev/null
+    info | grep -E "State:[ ]+running" > /dev/null
 }
 
 is_paused() {
-    info | grep "State:\s\+paused" > /dev/null
+    info | grep -E "State:[ ]+paused" > /dev/null
 }
 
 is_suspended() {
-    info | grep "State:\s\+saved" > /dev/null
+    info | grep -E "State:[ ]+suspended" > /dev/null
 }
 
 is_stopped() {
-    info | grep "State:\s\+powered off" > /dev/null
+    info | grep -E "State:[ ]+powered off" > /dev/null
 }
 
 is_aborted() {
-    info | grep "State:\s\+aborted" > /dev/null
+    info | grep -E "State:[ ]+aborted" > /dev/null
 }
 
 status() {
